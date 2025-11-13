@@ -52,19 +52,19 @@ public class MaintenanceService {
      * @param idVehicle Id du vehicule demandé
      * @return Retourne la liste de vehicule
      */
-    public List<ReservationDTO> requestReservation(int idVehicle) {
+    public boolean requestReservation(int idVehicle) {
         RestTemplate restTemplate = new RestTemplate();
         String reservationRequest = "http://localhost:8083/reservations/vehicle/" + idVehicle;
         ReservationDTO[] response = restTemplate.getForObject(reservationRequest, ReservationDTO[].class);
-        if (response == null) {
-            return new ArrayList<>();
+        if (response.length == 0) {
+            return true;
         } else {
-            return Arrays.asList(response);
+            return false;
         }
     }
 
     public boolean typeVerificationUnavaibility(String typeVehicleUnavailability, String typeVehicleRequest) {
-        if (typeVehicleUnavailability.equals(typeVehicleRequest)) {
+        if (typeVehicleUnavailability.equals(typeVehicleRequest) || typeVehicleUnavailability.contains(typeVehicleRequest)) {
             return true;
         }
         return false;

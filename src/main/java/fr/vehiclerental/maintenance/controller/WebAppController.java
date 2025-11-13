@@ -98,38 +98,33 @@ public class WebAppController {
 
     @RequestMapping(value = "/maintenance", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> addMaintenance(@Validated @RequestBody RequiredMaintenance informations) {
-        try {
-            List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
-            if (!vehicleVerification.isEmpty()) {
-                VehicleDTO vehicleDTO = vehicleVerification.getFirst();
-                List<UnavailabilityDTO> unavailabilityVerification = maintenanceService.requestUnavaibility(informations.getId_unavailability());
-                if (!unavailabilityVerification.isEmpty()) {
-                    UnavailabilityDTO unavailability = unavailabilityVerification.getFirst();
-                    List<ReservationDTO> reservationVerification = maintenanceService.requestReservation(informations.getId_vehicle());
-                    if (reservationVerification.isEmpty()) {
-                        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
-                            Map<String, Object> response = new HashMap<>();
-                            Maintenance maintenance = new Maintenance();
-                            maintenance.setIdVehicule(vehicleDTO.getId());
-                            maintenance.setIdUnavailability(unavailability.getId());
-                            maintenanceDao.save(maintenance);
-                            response.put("success", true);
-                            response.put("message", "Votre entretien a été ajouté !");
-                            return ResponseEntity.ok(response);
-                        } else {
-                            throw new VehicleType();
-                        }
+        List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
+        if (!vehicleVerification.isEmpty()) {
+            VehicleDTO vehicleDTO = vehicleVerification.getFirst();
+            List<UnavailabilityDTO> unavailabilityVerification = maintenanceService.requestUnavaibility(informations.getId_unavailability());
+            if (!unavailabilityVerification.isEmpty()) {
+                UnavailabilityDTO unavailability = unavailabilityVerification.getFirst();
+                if (maintenanceService.requestReservation(informations.getId_vehicle())) {
+                    if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
+                        Map<String, Object> response = new HashMap<>();
+                        Maintenance maintenance = new Maintenance();
+                        maintenance.setIdVehicule(vehicleDTO.getId());
+                        maintenance.setIdUnavailability(unavailability.getId());
+                        maintenanceDao.save(maintenance);
+                        response.put("success", true);
+                        response.put("message", "Votre entretien a été ajouté !");
+                        return ResponseEntity.ok(response);
                     } else {
-                        throw new VehicleAlreadyReserved();
+                        throw new VehicleType();
                     }
                 } else {
-                    throw new UnavailabilityNotFind();
+                    throw new VehicleAlreadyReserved();
                 }
             } else {
-                throw new VehicleNotFind();
+                throw new UnavailabilityNotFind();
             }
-        } catch (Exception e) {
-            throw new MaintenanceNotFind();
+        } else {
+            throw new VehicleNotFind();
         }
     }
 
@@ -138,7 +133,9 @@ public class WebAppController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été modifié !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Maintenance not found with ID : 1\",\n" + "  \"status\": 404\n" + "}")
     }))})
     @PutMapping("/maintenance/{id}")
-    public ResponseEntity<Map<String, Object>> editMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance, @Validated @RequestBody Maintenance maintenanceRequest) {
+    public ResponseEntity<Map<String, Object>> editMaintenance(
+            @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance,
+            @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
             List<Maintenance> maintenance = maintenanceDao.findById(idMaintenance);
             if (maintenance == null || maintenance.isEmpty()) {
@@ -159,7 +156,8 @@ public class WebAppController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été supprimé !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1 \",\n" + "  \"status\": 404\n" + "}")
     }))})
     @DeleteMapping("/maintenance/{id}")
-    public ResponseEntity<Map<String, Object>> deleteMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance) {
+    public ResponseEntity<Map<String, Object>> deleteMaintenance(
+            @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance) {
         List<Maintenance> maintenances = maintenanceDao.findById(idMaintenance);
         if (maintenances == null || maintenances.isEmpty()) {
             throw new MaintenanceNotFind();

@@ -20,7 +20,7 @@ public class ReservationDTO {
 
     @Override
     public String toString() {
-        return "VehicleDTO{" +
+        return "ReservationDTO{" +
                 "id=" + id +
                 '}';
     }
