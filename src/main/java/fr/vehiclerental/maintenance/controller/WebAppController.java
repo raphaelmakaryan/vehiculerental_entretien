@@ -137,17 +137,19 @@ public class WebAppController {
             @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance,
             @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
+            System.out.println(maintenanceRequest.toString());
             List<Maintenance> maintenance = maintenanceService.getMaintenanceOrThrow(idMaintenance, maintenanceDao);
             VehicleDTO vehicle = maintenanceService.getVehicleOrThrow(maintenanceRequest.getIdVehicule());
             UnavailabilityDTO unavailability = maintenanceService.getUnavailabilityOrThrow(maintenanceRequest.getIdUnavailability());
             if (!maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicle.getType())) {
                 throw new VehicleType();
+            } else {
+                maintenanceService.editMaintenance(maintenance.getFirst(), maintenanceRequest, maintenanceDao);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "Votre maintenance a été modifié !");
+                return ResponseEntity.ok(response);
             }
-            maintenanceService.editMaintenance(maintenance.getFirst(), maintenanceRequest, maintenanceDao);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Votre maintenance a été modifié !");
-            return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
